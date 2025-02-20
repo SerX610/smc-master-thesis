@@ -1,6 +1,6 @@
 # GTZAN Dataset Directory Structure
 
-This directory should contain the GTZAN dataset, organized as follows:
+This directory should contain the GTZAN dataset (run the [`scripts/data/download_gtzan.sh`](../../scripts/data/download_gtzan.sh) script to download it), organized as follows:
 
 ```
 genres_original/
