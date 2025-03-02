@@ -829,7 +829,7 @@ class MAEST(nn.Module):
         global first_RUN
         if first_RUN:
             _logger.debug(f"x size: {len(x)}")
-
+        batch_size = x.shape[0]
         if len(x.shape) == 1:
             _logger.debug("extracting melspec")
             if not self.melspectrogram_extractor:
@@ -864,8 +864,7 @@ class MAEST(nn.Module):
             # Note that the new batch axis needs to be next to the time.
             # resort axes: batch, channels, freq, time
             x = np.swapaxes(x, 0, 2)
-            x = torch.tensor(x)
-
+            x = torch.tensor(x).to(next(self.parameters()).device)
         x = self.forward_features(
             x,
             transformer_block=transformer_block,
@@ -876,13 +875,16 @@ class MAEST(nn.Module):
 
         if self.distilled_type == "mean":
             features = (x[0] + x[1]) / 2
-            features = features.mean(dim=0, keepdim=True)  # [B, 768] to [1, 768]
+            # features = features.mean(dim=0, keepdim=True)  # [B, 768] to [1, 768]
             if first_RUN:
                 _logger.debug(f"features size: {features.size()}")
             x = self.head(features)
             if first_RUN:
                 _logger.debug(f"head size: {x.size()}")
             first_RUN = False
+            segments_per_audio = features.shape[0] // batch_size  # e.g., 128 // 16 = 8
+            features = features.view(batch_size, segments_per_audio, -1)  # [16, 8, embed_dim]
+            features = features.mean(dim=1)  # [16, embed_dim]
             return x, features
         elif self.distilled_type == "separated":
             features = (x[0] + x[1]) / 2
