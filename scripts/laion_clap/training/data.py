@@ -509,7 +509,7 @@ def get_audio_features(sample, audio_data, max_len, data_truncating, data_fillin
 def select_text(json_dict_raw, text_augment_selection):
     # For selecting augmented text from dataset
     if text_augment_selection is None or text_augment_selection == "none":
-        texts = json_dict_raw["text"]
+        texts = json_dict_raw["tags"]
     elif text_augment_selection == "all":
         if "text_augment_all" in json_dict_raw.keys():
             texts = json_dict_raw["text_augment_all"]
@@ -630,7 +630,7 @@ def get_wds_dataset(
         args,
         model_cfg,
         is_train,
-        audio_ext="flac",
+        audio_ext="mp3",
         text_ext="json",
         max_len=480000,
         proportion=1.0,
@@ -857,7 +857,7 @@ def get_data(args, model_cfg):
     if args.dataset_type == "webdataset":
         args.train_data = get_tar_path_from_dataset_name(
             args.datasetnames,
-            args.datasetinfos,
+            ["train"],
             islocal=not args.remotedata,
             proportion=args.dataset_proportion,
             dataset_path=args.datasetpath,
@@ -875,7 +875,7 @@ def get_data(args, model_cfg):
         args.val_dataset_names = val_dataset_names
         args.val_data = get_tar_path_from_dataset_name(
             val_dataset_names,
-            ["valid", "test", "eval"],
+            ["validation"],
             islocal=not args.remotedata,
             proportion=1,
             dataset_path=args.datasetpath,
