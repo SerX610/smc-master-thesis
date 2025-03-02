@@ -674,8 +674,16 @@ class CLAP(nn.Module):
         elif audio is None:
             return self.encode_text(text, device=device)
         elif text is None:
-            return self.audio_projection(self.encode_audio(audio, device=device)["embedding"])
-        audio_features = self.audio_projection(self.encode_audio(audio, device=device)["embedding"])
+            if self.audio_cfg.model_type == "MAEST":
+                audio_features = self.encode_audio(audio["waveform"].squeeze().detach().cpu().numpy(), device=device)[1]
+            else:
+                audio_features = self.encode_audio(audio, device=device)["embedding"]            
+            return self.audio_projection(audio_features)
+        if self.audio_cfg.model_type == "MAEST":
+            audio_features = self.encode_audio(audio["waveform"].squeeze().detach().cpu().numpy(), device=device)[1]
+        else:
+            audio_features = self.encode_audio(audio, device=device)["embedding"]
+        audio_features = self.audio_projection(audio_features)
         audio_features = F.normalize(audio_features, dim=-1)
 
         text_features = self.encode_text(
