@@ -1,20 +1,20 @@
 """
 This module performs zero-shot classification on the GTZAN dataset using the
-Contrastive Language-Audio Pretraining (CLAP) model. It loads the GTZAN
-dataset, creates text prompts for each genre, computes text and audio
-embeddings, and evaluates the model's performance using accuracy and a
-confusion matrix. The results are saved as a confusion matrix plot.
+Microsoft Contrastive Language-Audio Pretraining (CLAP) model implementation. 
+It loads the GTZAN dataset, creates text prompts for each genre, computes text
+and audio embeddings, and evaluates the model's performance using accuracy and
+a confusion matrix. The results are saved as a confusion matrix plot.
 """
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import torch.nn.functional as F
+
+from gtzan_dataset import GTZANDataset
 from msclap import CLAP
 from sklearn.metrics import accuracy_score, confusion_matrix
 from tqdm import tqdm
-
-from gtzan_dataset import GTZANDataset
 
 
 def load_dataset(root_path):
