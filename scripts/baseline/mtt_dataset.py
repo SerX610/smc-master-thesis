@@ -1,6 +1,17 @@
+"""
+This module provides a PyTorch Dataset class for loading and processing the
+MagnaTagATune dataset. The MagnaTagATune dataset is a multi-label dataset for
+music classification, featuring audio files with associated tags describing
+genre, instrumentation, and other musical attributes. The dataset includes an
+annotations file where each row corresponds to an audio clip, witha file path
+and a set of binary tags. The provided class loads audio file paths and their
+corresponding tag data in a PyTorch-friendly format.
+"""
+
 import os
 import pandas as pd
 import torch
+
 from torch.utils.data import Dataset, random_split
 
 
@@ -47,17 +58,19 @@ class MagnaTagATuneDataset(Dataset):
         return len(self.file_paths)
 
 
-def split_dataset(dataset, train_ratio=0.75):
+def split_dataset(dataset, train_ratio=0.75, seed=42):
     """
     Splits the dataset into training and test sets.
     
     Args:
         dataset (Dataset): The full dataset.
         train_ratio (float): The ratio of training data (default is 0.75).
+        seed (int): Random seed for reproducibility.
     
     Returns:
         tuple: (train_dataset, test_dataset)
     """
+    torch.manual_seed(seed)
     train_size = int(train_ratio * len(dataset))
     test_size = len(dataset) - train_size
     train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
