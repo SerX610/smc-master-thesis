@@ -80,8 +80,8 @@ def extract_embeddings(dataset, clap_model, save_every=1000, save_path="./embedd
         # Save embeddings periodically to avoid memory issues
         if (idx + 1) % save_every == 0:
             save_embeddings(
-                np.stack(all_audio_embeddings),
-                np.stack(all_text_embeddings),
+                np.stack(all_audio_embeddings).squeeze(1),
+                np.stack(all_text_embeddings).squeeze(1),
                 np.stack(all_labels),
                 f"{save_path}_audio_embeddings_{idx}.npy",
                 f"{save_path}_text_embeddings_{idx}.npy",
@@ -96,7 +96,7 @@ def extract_embeddings(dataset, clap_model, save_every=1000, save_path="./embedd
 
     # Return any remaining embeddings that were not saved
     if all_audio_embeddings:
-        return (np.stack(all_audio_embeddings), np.stack(all_text_embeddings), np.stack(all_labels))
+        return (np.stack(all_audio_embeddings).squeeze(1), np.stack(all_text_embeddings).squeeze(1), np.stack(all_labels))
     else:
         return np.array([]), np.array([]), np.array([])
     
