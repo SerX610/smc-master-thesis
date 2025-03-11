@@ -42,7 +42,7 @@ def create_arbitrary_prompts(classes):
         list: List of text prompts for each genre.
     """
     print("Creating text prompts...")
-    return [f"This is a {genre} song." for genre in classes]
+    return [f"This audio is a {genre} song." for genre in classes]
 
 
 def compute_text_embeddings(clap_model, prompts):
