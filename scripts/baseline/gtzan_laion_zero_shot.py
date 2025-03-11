@@ -152,7 +152,7 @@ def plot_confusion_matrix(true_labels, pred_labels, classes, save_path):
     cm = confusion_matrix(true_labels, pred_labels)
     plt.figure(figsize=(10, 8))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=classes, yticklabels=classes)
-    plt.title('Confusion Matrix for GTZAN Zero-Shot Classification using LAION-CLAP')
+    plt.title('Confusion Matrix for GTZAN Zero-Shot Classification using LAION-AI CLAP')
     plt.xlabel('Predicted Labels')
     plt.ylabel('True Labels')
     plt.xticks(rotation=45)
