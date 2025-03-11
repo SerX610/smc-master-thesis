@@ -130,7 +130,7 @@ def main():
     root_path = "../../data/gtzan"
 
     # Define path to save the confusion matrix plot
-    plot_path = "../../results/gtzan_zero_shot_class_confusion_matrix.png"
+    plot_path = "../../results/gtzan_ms_clap_zero_shot_class_confusion_matrix.png"
 
     # Load dataset
     dataset = load_dataset(root_path)
