@@ -33,8 +33,6 @@ class CLAPTransferLearning(LightningModule):
         lr (float): Learning rate for the optimizer.
         criterion (nn.BCEWithLogitsLoss): Loss function combining Sigmoid and BCELoss.
         threshold (float): Threshold for binary classification.
-        top_n (int): Number of top labels to consider for evaluation.
-        top_n_indices (list): Indices of the top N labels.
         tag_index_mapping (dict): Mapping from tag indices to tag names.
         plot_dir (str): Directory to save the confusion matrix plot.
         classifier (nn.Sequential): MLP classifier for multimodal input.
@@ -47,14 +45,12 @@ class CLAPTransferLearning(LightningModule):
             self,
             audio_embeddings_file,
             hidden_size=512,
-            num_labels=188,
+            num_labels=50,
             dropout=0.2,
             lr=0.0001,
             threshold=0.5,
-            top_n=50,
-            top_n_indices=None,
             tag_index_mapping=None,
-            plot_dir="confusion_matrix.png",
+            plot_dir="../../results/mtt_clap_multilabel_classification_confusion_matrix.png",
             ):
         super().__init__()
 
@@ -69,9 +65,6 @@ class CLAPTransferLearning(LightningModule):
 
         # Initialize parameters for model evaluation
         self.threshold = threshold
-        self.top_n = top_n
-        if top_n_indices is not None:
-            self.top_n_indices = top_n_indices.copy()
         if tag_index_mapping is not None:
             self.tag_index_mapping = tag_index_mapping
         self.plot_dir = plot_dir
@@ -113,15 +106,15 @@ class CLAPTransferLearning(LightningModule):
         self.test_metrics = nn.ModuleDict(
             {
                 "test-AUROC-macro": MultilabelAUROC(
-                    num_labels=self.top_n, average="macro"
+                    num_labels=self.num_labels, average="macro"
                 ),
                 "test-MAP-macro": MultilabelAveragePrecision(
-                    num_labels=self.top_n, average="macro"
+                    num_labels=self.num_labels, average="macro"
                 ),
             }
         )
         self.test_confusion_matrix = MultilabelConfusionMatrix(
-            num_labels=self.top_n
+            num_labels=self.num_labels
         )
 
 
@@ -186,8 +179,6 @@ class CLAPTransferLearning(LightningModule):
         """
         labels = batch[1].int()
         logits, _ = self.predict(batch)
-        labels = labels[:, self.top_n_indices]
-        logits = logits[:, self.top_n_indices]
         for _, metric in self.test_metrics.items():
             metric.update(logits, labels)
         self.test_confusion_matrix.update(logits, labels)
@@ -218,8 +209,8 @@ class CLAPTransferLearning(LightningModule):
         conf_matrix = conf_matrix.cpu().numpy()
         fig, axes = plt.subplots(nrows=10, ncols=5, figsize=(25, 50), constrained_layout=True)
         axes = axes.flatten()
-        fig.suptitle(f'Confusion Matrix for Top {self.top_n} Labels', fontsize=24)
-        labels = [self.tag_index_mapping[str(i)] for i in self.top_n_indices]
+        fig.suptitle("Confusion Matrix for Top 50 Labels", fontsize=24)
+        labels = [self.tag_index_mapping[i] for i in range(self.num_labels)]
         for ax, cm, label in zip(axes, conf_matrix, labels):
             im = ax.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
             ax.set_title(label, fontsize=15)

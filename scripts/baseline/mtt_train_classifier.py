@@ -1,10 +1,12 @@
 import numpy as np
+import os
 import torch
 
 from clap_transfer_learning import CLAPTransferLearning
+from dataclasses import dataclass
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import ModelCheckpoint
-from torch.utils.data import Dataset, DataLoader, random_split
+from torch.utils.data import Dataset, DataLoader
 
 seed = 42
 seed_everything(seed, workers=True)
@@ -13,89 +15,111 @@ seed_everything(seed, workers=True)
 class AudioEmbeddingDataset(Dataset):
     """
     A custom PyTorch Dataset for loading audio embeddings and corresponding labels.
-    
+
     Args:
-        audio_embeddings_file (str): Path to the numpy file containing audio embeddings.
-        labels_file (str): Path to the numpy file containing labels.
+        audio_embeddings_file (str): Path to the .npy file containing audio embeddings.
+        labels_file (str): Path to the .npy file containing labels corresponding to the audio embeddings.
     """
     def __init__(self, audio_embeddings_file, labels_file):
         self.audio_embeddings = torch.from_numpy(np.load(audio_embeddings_file)).float()
         self.labels = torch.from_numpy(np.load(labels_file)).float()
 
     def __len__(self):
+        """Returns the number of samples in the dataset."""
         return len(self.labels)
 
     def __getitem__(self, idx):
+        """
+        Args:
+            idx (int): Index of the sample to retrieve.
+
+        Returns:
+            tuple: A tuple containing the index and the corresponding label.
+        """
         return idx, self.labels[idx]
 
 
-def prepare_data(audio_embeddings_file, labels_file, batch_size=64, train_split=0.8):
+@dataclass
+class CLAPTrainerConfig:
     """
-    Prepares the training and validation data loaders.
-    
+    Configuration class for CLAPTrainer that holds various hyperparameters and file paths.
+    """
+
+    embeddings_folder: str = "mtt_embeddings"  # Path to the folder containing the embeddings
+    model_dir: str = "../../models/trained/"  # Directory to save the model checkpoint
+    model_ckpt: str = "mtt-clap-multilabel-classifier-checkpoint"  # Filename for saving the model checkpoint
+    batch_size: int = 64  # Batch size for training
+    max_epochs: int = 10  # Maximum number of training epochs
+
+
+class CLAPTrainer:
+    """
+    Trainer class to handle data preparation, model initialization, and training.
+
     Args:
-        audio_embeddings_file (str): Path to the audio embeddings file.
-        labels_file (str): Path to the labels file.
-        batch_size (int, optional): Batch size for data loaders. Default is 64.
-        train_split (float, optional): Proportion of data to use for training. Default is 0.8.
-    
-    Returns:
-        tuple: A tuple containing training and validation DataLoader instances.
+        config (CLAPTrainerConfig): A configuration object that contains training parameters.
     """
-    full_dataset = AudioEmbeddingDataset(audio_embeddings_file, labels_file)
-    train_size = int(train_split * len(full_dataset))
-    val_size = len(full_dataset) - train_size
-    train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
+    def __init__(self, config: CLAPTrainerConfig):
+        self.config = config
 
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
+        # Ensure the model directory exists
+        os.makedirs(self.config.model_dir, exist_ok=True)
 
-    return train_dataloader, val_dataloader
+        # Define dataset paths for training and validation
+        self.train_audio_embeddings_file = f"{self.config.embeddings_folder}/train_audio_embeddings.npy"
+        self.train_labels_file = f"{self.config.embeddings_folder}/train_labels.npy"
+        self.valid_audio_embeddings_file = f"{self.config.embeddings_folder}/valid_audio_embeddings.npy"
+        self.valid_labels_file = f"{self.config.embeddings_folder}/valid_labels.npy"
 
+        # Initialize the DataLoader for both training and validation datasets
+        self.train_dataloader = DataLoader(
+            AudioEmbeddingDataset(self.train_audio_embeddings_file, self.train_labels_file),
+            batch_size=self.config.batch_size, shuffle=True, num_workers=4
+        )
+        self.valid_dataloader = DataLoader(
+            AudioEmbeddingDataset(self.valid_audio_embeddings_file, self.valid_labels_file),
+            batch_size=self.config.batch_size, shuffle=False, num_workers=4
+        )
 
-def train_model(model, model_ckpt, train_dataloader, val_dataloader, model_dir="../../models/trained/", max_epochs=10):
-    """
-    Trains the CLAPTransferLearning model using PyTorch Lightning.
-    
-    Args:
-        model (CLAPTransferLearning): The model to train.
-        model_ckpt (str): Name for the checkpoint file.
-        train_dataloader (DataLoader): DataLoader for training data.
-        val_dataloader (DataLoader): DataLoader for validation data.
-        model_dir (str, optional): Directory to save the best model checkpoint. Default is '../../models/trained/'.
-        max_epochs (int, optional): Maximum number of training epochs. Default is 10.
-    """
-    checkpoint_callback = ModelCheckpoint(
-        monitor="val_loss",
-        dirpath=model_dir,
-        filename=model_ckpt,
-        save_top_k=1,
-        mode="min",
-    )
+        # Initialize the CLAP model for transfer learning
+        self.model = CLAPTransferLearning(self.train_audio_embeddings_file)
 
-    trainer = Trainer(
-        max_epochs=max_epochs,
-        accelerator="gpu" if torch.cuda.is_available() else "cpu",
-        callbacks=[checkpoint_callback],
-    )
+    def train_model(self):
+        """
+        Trains the CLAP model using PyTorch Lightning with checkpointing.
+        """
 
-    trainer.fit(model, train_dataloader, val_dataloader)
+        checkpoint_callback = ModelCheckpoint(
+            monitor="val_loss",
+            dirpath=self.config.model_dir,
+            filename=self.config.model_ckpt,
+        )
+
+        # Initialize the PyTorch Lightning trainer with GPU acceleration if available
+        trainer = Trainer(
+            max_epochs=self.config.max_epochs,
+            accelerator="gpu" if torch.cuda.is_available() else "cpu",
+            callbacks=[checkpoint_callback],
+        )
+
+        # Train the model
+        trainer.fit(self.model, self.train_dataloader, self.valid_dataloader)
 
 
 def main():
-    # Initialize variables
-    train_audio_embeddings_file = "mtt_laion_embeddings/train_audio_embeddings.npy"
-    train_labels_file = "mtt_laion_embeddings/train_labels.npy"
-    model_ckpt = "mtt-laion-clap-multilabel-classifier-checkpoint"
 
-    # Initialize the training and validation data
-    train_dataloader, val_dataloader = prepare_data(train_audio_embeddings_file, train_labels_file)
+    # Initialize configuration with specified parameters
+    config = CLAPTrainerConfig(
+        embeddings_folder="mtt_ms_embeddings",
+        model_dir="../../models/trained/",
+        model_ckpt="mtt-ms-clap-multilabel-classifier-checkpoint",
+        batch_size=64,
+        max_epochs=10,
+    )
 
-    # Initialize the model
-    model = CLAPTransferLearning(train_audio_embeddings_file)
-
-    # Train the model using the given data
-    train_model(model, model_ckpt, train_dataloader, val_dataloader)
+    # Initialize and train the model using the configuration.
+    trainer = CLAPTrainer(config)
+    trainer.train_model()
 
 
 if __name__ == "__main__":
