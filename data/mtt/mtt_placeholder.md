@@ -25,7 +25,16 @@ mtt/
 │   ├── file_00100.mp3
 │   ├── file_00101.mp3
 │   └── ...
-└── annotations_final.csv
+└── MTAT_split/
+    ├── top50_tags.txt
+    ├── train_list_pub.cP
+    ├── valid_list_pub.cP
+    ├── test_list_pub.cP
+    ├── y_train_pub.npy
+    ├── y_valid_pub.npy
+    └── y_test_pub.npy
 ```
 
 The files `/6/norine_braun-now_and_zen-08-gently-117-146.mp3`, `/8/jacob_heringman-josquin_des_prez_lute_settings-19-gintzler__pater_noster-204-233.mp3`, and `/9/american_baroque-dances_and_suites_of_rameau_and_couperin-25-le_petit_rien_xiveme_ordre_couperin-88-117.mp3` have been removed from the dataset as they are corrupted.
+
+The `MTAT_split` folder contains predefined splits (from https://github.com/jongpillee/music_dataset_split/tree/master/MTAT_split) for the MagnaTagATune dataset, including only tracks with the 50 most frequently occurring tags.
