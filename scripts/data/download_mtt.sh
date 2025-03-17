@@ -5,8 +5,8 @@ BASE_URL="https://mirg.city.ac.uk/datasets/magnatagatune/mp3.zip."
 DEST_DIR="../../data/mtt/"
 MERGED_ZIP="$DEST_DIR/mp3.zip"
 TAGS_URL="https://mirg.city.ac.uk/datasets/magnatagatune/annotations_final.csv"
-ANNOTATIONS_FILE="$DEST_DIR/annotations_final.csv"
-CLEANED_ANNOTATIONS_FILE="$DEST_DIR/annotations.csv"
+SPLIT_URL="https://github.com/jongpillee/music_dataset_split/archive/refs/heads/master.zip"
+SPLIT_DIR="$DEST_DIR/MTAT_split"
 
 # List of corrupted files to remove
 corrupted_files=(
@@ -37,10 +37,6 @@ unzip "$MERGED_ZIP" -d "$DEST_DIR"
 # Remove unnecessary zip files
 rm "$DEST_DIR"/mp3.zip*
 
-# Download the annotations file
-echo "Downloading annotations file..."
-curl -L -o "$ANNOTATIONS_FILE" "$TAGS_URL"
-
 # Remove corrupted files
 echo "Removing corrupted files..."
 for file in "$DEST_DIR/${corrupted_files[@]}"; do
@@ -52,9 +48,20 @@ for file in "$DEST_DIR/${corrupted_files[@]}"; do
     fi
 done
 
-# Clean annotations from corrupted files
-python clean_mtt_annotations.py "$ANNOTATIONS_FILE" "${corrupted_files[@]}" "$CLEANED_ANNOTATIONS_FILE"
-rm -rf $ANNOTATIONS_FILE
+# Download and extract MTAT_split folder
+echo "Downloading MTAT_split..."
+wget -O "$DEST_DIR/master.zip" "$SPLIT_URL"
+
+echo "Extracting MTAT_split..."
+unzip "$DEST_DIR/master.zip" -d "$DEST_DIR"
+
+# Move MTAT_split to correct location and clean up
+mv "$DEST_DIR/music_dataset_split-master/MTAT_split" "$SPLIT_DIR"
+rm -rf "$DEST_DIR/music_dataset_split-master" "$DEST_DIR/master.zip"
+
+# Remove README.md from MTAT_split
+rm "$SPLIT_DIR/README.md"
+echo "Removed README.md from $SPLIT_DIR"
 
 # Confirm completion
 echo "Dataset setup complete."
