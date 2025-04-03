@@ -11,7 +11,7 @@ import numpy as np
 import os
 import torch
 
-from mtt_dataset import MagnaTagATuneDataset, split_dataset
+from mtt_dataset import MagnaTagATuneDataset
 from tqdm import tqdm
 
 
@@ -61,12 +61,9 @@ def extract_embeddings(dataset, clap_model, save_every=1000, save_path="./embedd
 
     # Extract embeddings for each sample in the dataset
     for idx, (file_path, target, one_hot_target) in enumerate(tqdm(dataset, desc="Extracting embeddings...")):
-        # Load and preprocess audio data
-        audio_data, _ = librosa.load(file_path, sr=48000)
-        audio_data = audio_data.reshape(1, -1)
 
         # Extract audio embeddings
-        audio_embeddings = clap_model.get_audio_embedding_from_data(x=audio_data, use_tensor=False)
+        audio_embeddings = clap_model.get_audio_embedding_from_filelist(x=[file_path], use_tensor=False)
 
         # Combine tags into a single text description and extract text embeddings
         text_description = ", ".join(target)
@@ -122,6 +119,19 @@ def save_embeddings(audio_embeddings, text_embeddings, labels, audio_embeddings_
     print(f"Labels saved to {labels_path}")
 
 
+def normalize_embeddings(embeddings):
+    """
+    Normalizes the given embeddings by subtracting the mean and dividing by the standard deviation.
+
+    Args:
+        embeddings (numpy.ndarray): A NumPy array containing embeddings.
+
+    Returns:
+        numpy.ndarray: The normalized embeddings, where the mean is 0 and the standard deviation is 1.
+    """
+    return (embeddings - np.mean(embeddings)) / np.std(embeddings)
+
+
 def concatenate_and_save_all_embeddings(folder_path, split_name):
     """
     Concatenates all partial .npy embedding files into a single file.
@@ -140,6 +150,10 @@ def concatenate_and_save_all_embeddings(folder_path, split_name):
     all_text_embeddings = np.concatenate([np.load(f) for f in text_files], axis=0)
     all_labels = np.concatenate([np.load(f) for f in label_files], axis=0)
 
+    # Standardize embeddings
+    all_audio_embeddings = normalize_embeddings(all_audio_embeddings)
+    all_text_embeddings = normalize_embeddings(all_text_embeddings)
+    
     # Save concatenated embeddings and labels
     np.save(f'{folder_path}_audio_embeddings.npy', all_audio_embeddings)
     np.save(f'{folder_path}_text_embeddings.npy', all_text_embeddings)
@@ -153,27 +167,28 @@ def concatenate_and_save_all_embeddings(folder_path, split_name):
 
 
 if __name__ == "__main__":
-    mtt_data_path = "../../data/mtt"
-    annotations_file = "annotations.csv"
-    model_checkpoint_path = "../../models/laion-clap/music_audioset_epoch_15_esc_90.14.pt"
-    embeddings_folder = "mtt_laion_embeddings"
+    # Define the folder where embeddings will be stored
+    embeddings_folder = "new_mtt_laion_embeddings"
+    os.makedirs(embeddings_folder, exist_ok=True)
 
+    # Initialize CLAP model from checkpoint with GPU support if available
+    model_checkpoint_path = "../../models/laion-clap/music_audioset_epoch_15_esc_90.14.pt"
     clap_model = load_laion_clap(model_checkpoint_path)
 
-    print("Loading MagnaTagATune Dataset...")
-    dataset = MagnaTagATuneDataset(root=mtt_data_path, annotations_file=annotations_file)
+    with torch.no_grad():
+        for split in ["valid", "train", "test"]:
+            print(f"Processing {split} dataset...")
 
-    print("Splitting dataset...")
-    train_dataset, test_dataset = split_dataset(dataset, train_ratio=0.75, seed=42)
+            # Load dataset split
+            dataset = MagnaTagATuneDataset(split)
 
-    for split_name, dataset in zip(['train', 'test'], [train_dataset, test_dataset]):
-        print(f"Extracting embeddings for {split_name} set...")
-        audio_embeddings, text_embeddings, labels = extract_embeddings(dataset, clap_model, save_path=f"{embeddings_folder}/{split_name}")
-        save_embeddings(audio_embeddings,
-                        text_embeddings,
-                        labels,
-                        f"{embeddings_folder}/{split_name}_audio_embeddings_last.npy",
-                        f"{embeddings_folder}/{split_name}_text_embeddings_last.npy",
-                        f"{embeddings_folder}/{split_name}_labels_last.npy"
-                    )
-        concatenate_and_save_all_embeddings(f"{embeddings_folder}/{split_name}", split_name)
+            # Extract embeddings
+            audio_embeddings, text_embeddings, labels = extract_embeddings(dataset, clap_model, save_path=f"{embeddings_folder}/{split}")
+            save_embeddings(audio_embeddings,
+                            text_embeddings,
+                            labels,
+                            f"{embeddings_folder}/{split}_audio_embeddings_last.npy",
+                            f"{embeddings_folder}/{split}_text_embeddings_last.npy",
+                            f"{embeddings_folder}/{split}_labels_last.npy"
+                        )
+            concatenate_and_save_all_embeddings(f"{embeddings_folder}/{split}", split)
