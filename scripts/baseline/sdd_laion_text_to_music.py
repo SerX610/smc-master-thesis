@@ -9,9 +9,7 @@ import laion_clap
 import numpy as np
 import torch
 
-from collections import defaultdict
 from sdd_dataset import SongDescriberDataset
-from sklearn.metrics import pairwise_distances
 from tqdm import tqdm
 
 
@@ -69,64 +67,63 @@ def compute_audio_embeddings(clap_model, dataset, batch_size=32):
     audio_embed = []
     audio_files = [dataset[idx][0] for idx in range(len(dataset))]
     
-    # Process the audio files in batches for efficiency.
+    # Process the audio files in batches for efficiency
     for i in tqdm(range(0, len(audio_files), batch_size)):
         batch_paths = audio_files[i:i + batch_size]
         batch_embeddings = clap_model.get_audio_embedding_from_filelist(batch_paths)
         audio_embed.append(batch_embeddings)
         
-    # Concatenate all batch embeddings into a single array.
+    # Concatenate all batch embeddings into a single array
     audio_embed = np.concatenate(audio_embed)
     return audio_embed
 
 
-def get_audio_to_text_indices(dataset):
-    """
-    Extracts the mapping between audio files and corresponding text descriptions.
+def get_idx_to_audio_paths(dataset):
+    '''
+    Extracts a mapping from dataset indices to corresponding audio paths.
 
     Args:
-        dataset (SongDescriberDataset): Instance of the SongDescriberDataset containing audio-text pairs.
+        dataset (SongDescriberDataset): Dataset containing audio-text pairs.
 
     Returns:
-        dict: A dictionary mapping each audio file path to a list of corresponding text indices.
-    """
-    audio_to_text_indices = defaultdict(list)
-
-    # Iterate over the dataset to create the audio-to-text mapping.
-    for idx in tqdm(range(len(dataset)), desc="Extracting audio-to-text indices..."):
-        # Retrieve audio file path and text captions.
-        audio_path, _ = dataset[idx]
-
-        # Store the mapping from audio index to text index.
-        audio_to_text_indices[audio_path].append(idx)
-
-    return audio_to_text_indices
+        list[str]: A list where each index corresponds to a text description 
+                   and contains the associated audio file path.
+    '''
+    return [dataset[idx][0] for idx in tqdm(range(len(dataset)), desc="Extracting audio paths")]
 
 
-def compute_recall_at_k(similarity_matrix, k, dataset, audio_to_text_indices):
-    """
-    Compute the recall at k for the retrieval system.
+def compute_recall_at_k(similarity_matrix, k, dataset, idx_to_audio_paths):
+    '''
+    Compute recall at k for text-to-audio retrieval.
 
     Args:
-        similarity_matrix (np.ndarray): Matrix of similarity scores between text and audio embeddings.
-        k (int): The number of top matches to consider for recall calculation.
-        dataset (SongDescriberDataset): The dataset to access audio-text relationships.
-        audio_to_text_indices (dict): Dictionary mapping audio index to valid text indices.
+        similarity_matrix (np.ndarray): Similarity scores between text and audio embeddings.
+        k (int): Number of top-ranked results to consider.
+        dataset (SongDescriberDataset): Dataset containing audio-text pairs.
+        idx_to_audio_paths (list[str]): Mapping of dataset indices to audio paths.
 
     Returns:
-        float: The recall at k, which is the proportion of queries for which at least one relevant audio 
-               is found in the top k matches.
-    """
+        float: Recall at k (proportion of queries where at least one relevant audio file is in top k results).
+    '''
     num_queries = similarity_matrix.shape[0]
     ranks = np.argsort(-similarity_matrix, axis=1)  # Sort in descending order (higher similarity first)
     correct_at_k = []
 
     for idx in range(num_queries):
-        valid_audio_indices = set(audio_to_text_indices[dataset[idx][0]])  # Valid audio indices for the current text
-        top_k_audio_indices = set(ranks[idx, :k])  # Top k audio indices based on similarity scores
+        valid_audio_paths = dataset[idx][0]  # Valid audio paths for the current text
+        top_k_audio_paths = []
+        seen_audio_path = set()
 
-        # Check if any of the top-k audio indices match the valid audio indices for the current text.
-        if not valid_audio_indices.isdisjoint(top_k_audio_indices):
+        # Get the top-k unique audio paths
+        for i in ranks[idx]:
+            if idx_to_audio_paths[i] not in seen_audio_path:
+                top_k_audio_paths.append(idx_to_audio_paths[i])
+                seen_audio_path.add(idx_to_audio_paths[i])
+            if len(top_k_audio_paths) == k:  # Stop when we have exactly k unique elements
+                break
+
+        # Check if any of the top-k audio paths match the valid audio paths for the current text
+        if valid_audio_paths in top_k_audio_paths:
             correct_at_k.append(1)
         else:
             correct_at_k.append(0)
@@ -134,34 +131,41 @@ def compute_recall_at_k(similarity_matrix, k, dataset, audio_to_text_indices):
     return np.mean(correct_at_k)
 
 
-def compute_median_rank(similarity_matrix, dataset, audio_to_text_indices):
-    """
+def compute_median_rank(similarity_matrix, dataset, idx_to_audio_paths):
+    '''
     Compute the median rank of the first relevant audio sample for each query.
 
     Args:
-        similarity_matrix (np.ndarray): Matrix of similarity scores between text and audio embeddings.
-        dataset (SongDescriberDataset): The dataset to access audio-text relationships.
-        audio_to_text_indices (dict): Dictionary mapping audio index to valid text indices.
+        similarity_matrix (np.ndarray): Similarity scores between text and audio embeddings.
+        dataset (SongDescriberDataset): Dataset containing audio-text pairs.
+        idx_to_audio_paths (list[str]): Mapping of dataset indices to audio paths.
 
     Returns:
-        float: The median rank of correct audio samples, where lower ranks are better.
-    """
+        float: Median rank of correct audio samples.
+    '''
     num_queries = similarity_matrix.shape[0]
     ranks = np.argsort(-similarity_matrix, axis=1)  # Sort in descending order (higher similarity first)
     median_ranks = []
 
     for idx in range(num_queries):
-        valid_audio_indices = set(audio_to_text_indices[dataset[idx][0]])  # Valid audio indices for the current text
-        correct_rank = None
+        valid_audio_paths = dataset[idx][0]  # Valid audio paths for the current text
+
+        unique_ranks = []
+        seen_ranks = set()
+
+        # Ensure unique ranks while maintaining order
+        for rank in ranks[idx]:
+            if rank not in seen_ranks:
+                unique_ranks.append(rank)
+                seen_ranks.add(rank)
 
         # Find the rank of the first valid audio match
-        for rank in ranks[idx]:
-            if rank in valid_audio_indices:
-                correct_rank = np.where(ranks[idx] == rank)[0][0] + 1  # Rank is 1-based
+        for i, rank in enumerate(unique_ranks):
+            if idx_to_audio_paths[rank] in valid_audio_paths:
+                correct_rank = i + 1  # Rank is 1-based
                 break
 
-        if correct_rank:
-            median_ranks.append(correct_rank)
+        median_ranks.append(correct_rank)
 
     return np.median(median_ranks)
 
@@ -183,24 +187,29 @@ def main():
         # Compute audio embeddings
         audio_embeddings = compute_audio_embeddings(clap_model, dataset)
 
-        # Get audio to text indices
-        audio_to_text_indices = get_audio_to_text_indices(dataset)
+    # Get index to audio paths mapping
+    idx_to_audio_paths = get_idx_to_audio_paths(dataset)
+
+    np.save("sdd_laion_embeddings/text_embeddings.npy", text_embeddings)
+    np.save("sdd_laion_embeddings/audio_embeddings.npy", audio_embeddings)
+    # text_embeddings = np.load("sdd_laion_embeddings/text_embeddings.npy")
+    # audio_embeddings = np.load("sdd_laion_embeddings/audio_embeddings.npy")
 
     # Compute similarity matrix between text and audio embeddings
     print("Computing similarity scores...")
-    similarity_matrix = 1 - pairwise_distances(text_embeddings, audio_embeddings, metric="cosine")
+    similarity_matrix = np.dot(text_embeddings, audio_embeddings.T)
 
     # Evaluate retrieval performance
-    recall_at_1 = compute_recall_at_k(similarity_matrix, 1, dataset, audio_to_text_indices)
-    recall_at_5 = compute_recall_at_k(similarity_matrix, 5, dataset, audio_to_text_indices)
-    recall_at_10 = compute_recall_at_k(similarity_matrix, 10, dataset, audio_to_text_indices)
-    median_rank = compute_median_rank(similarity_matrix, dataset, audio_to_text_indices)
+    recall_at_1 = compute_recall_at_k(similarity_matrix, 1, dataset, idx_to_audio_paths)
+    recall_at_5 = compute_recall_at_k(similarity_matrix, 5, dataset, idx_to_audio_paths)
+    recall_at_10 = compute_recall_at_k(similarity_matrix, 10, dataset, idx_to_audio_paths)
+    median_rank = compute_median_rank(similarity_matrix, dataset, idx_to_audio_paths)
 
     # Print results
     print("\nEvaluation Results:")
-    print(f"Recall at 1 (R@1): {recall_at_1:.4f}")
-    print(f"Recall at 5 (R@5): {recall_at_5:.4f}")
-    print(f"Recall at 10 (R@10): {recall_at_10:.4f}")
+    print(f"Recall at 1 (R@1): {100*recall_at_1:.2f}")
+    print(f"Recall at 5 (R@5): {100*recall_at_5:.2f}")
+    print(f"Recall at 10 (R@10): {100*recall_at_10:.2f}")
     print(f"Median Rank (MedR): {int(median_rank)}")
 
 
