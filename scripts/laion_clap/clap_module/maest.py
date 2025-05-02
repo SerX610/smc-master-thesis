@@ -1,9 +1,5 @@
 """
-Most of this code comes from the timm  library.
-We tried to disentangle from the timm library version.
-
-Adapted from https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py
-
+This script is a modification of the original MAEST implementation (https://github.com/palonso/MAEST/blob/main/models/maest.py)
 """
 
 import collections
@@ -25,7 +21,7 @@ from .helpers.vit_helpers import (
     build_model_with_cfg,
 )
 from .helpers.melspectrogram_extractor import MelSpectrogramExtractor
-from .discogs_labels import discogs_400labels, discogs_519labels
+# from .discogs_labels import discogs_400labels, discogs_519labels
 
 _logger = logging.getLogger("MAEST")
 
@@ -238,6 +234,7 @@ class PatchEmbed(nn.Module):
             in_chans, embed_dim, kernel_size=patch_size, stride=stride
         )
         self.norm = norm_layer(embed_dim) if norm_layer else nn.Identity()
+        self.in_chans = in_chans
 
     def forward(self, x):
         B, C, H, W = x.shape
@@ -498,10 +495,10 @@ class MAEST(nn.Module):
         self.melspectrogram_extractor = None
         norm_layer = norm_layer or partial(nn.LayerNorm, eps=1e-6)
         act_layer = act_layer or nn.GELU
-        if self.num_classes == 400:
-            self.labels = discogs_400labels
-        elif self.num_classes == 519:
-            self.labels = discogs_519labels
+        # if self.num_classes == 400:
+        #     self.labels = discogs_400labels
+        # elif self.num_classes == 519:
+        #     self.labels = discogs_519labels
 
         self.patch_embed = embed_layer(
             img_size=img_size,
@@ -879,6 +876,7 @@ class MAEST(nn.Module):
 
         if self.distilled_type == "mean":
             features = (x[0] + x[1]) / 2
+            features = features.mean(dim=0, keepdim=True)  # [8, 768] to [1, 768]
             if first_RUN:
                 _logger.debug(f"features size: {features.size()}")
             x = self.head(features)

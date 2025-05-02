@@ -20,6 +20,7 @@ from .utils import freeze_batch_norm_2d
 
 from .pann_model import create_pann_model
 from .htsat import create_htsat_model
+from .maest import get_maest
 from transformers import BertModel, RobertaModel, BartModel
 from transformers.tokenization_utils_base import BatchEncoding
 
@@ -465,6 +466,8 @@ class CLAP(nn.Module):
             self.audio_branch = create_pann_model(audio_cfg, enable_fusion, fusion_type)
         elif audio_cfg.model_type == "HTSAT":
             self.audio_branch = create_htsat_model(audio_cfg, enable_fusion, fusion_type)
+        elif audio_cfg.model_type == "MAEST":
+            self.audio_branch = get_maest("discogs-maest-10s-pw-129e")
         else:
             logging.error(f"Model config for {audio_cfg.model_type} not found")
             raise RuntimeError(f"Model config for {audio_cfg.model_type} not found.")
@@ -587,7 +590,10 @@ class CLAP(nn.Module):
         return mask
 
     def encode_audio(self, audio, device):
-        return self.audio_branch(audio, mixup_lambda=None, device=device)  # mix lambda needs to add
+        if self.audio_cfg.model_type == "MAEST":
+            return self.audio_branch(audio)
+        else:
+            return self.audio_branch(audio, mixup_lambda=None, device=device)  # mix lambda needs to add
 
     # def list_of_dict_of_tensor2dict_of_tensor(self, x, device):
     #     tmp = {}
@@ -736,7 +742,10 @@ class CLAP(nn.Module):
         keys = data[0].keys()
         for k in keys:
             input_dict[k] = torch.cat([d[k].unsqueeze(0) for d in data], dim=0).to(device)
-        audio_embeds = self.encode_audio(input_dict, device=device)["embedding"]
+        if self.audio_cfg.model_type == "MAEST":
+            audio_embeds = self.encode_audio(input_dict["waveform"], device=device)[1]
+        else:
+            audio_embeds = self.encode_audio(input_dict, device=device)["embedding"]
         audio_embeds = self.audio_projection(audio_embeds)
         audio_embeds = F.normalize(audio_embeds, dim=-1)
         return audio_embeds
