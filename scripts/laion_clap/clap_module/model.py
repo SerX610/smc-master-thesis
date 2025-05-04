@@ -743,7 +743,7 @@ class CLAP(nn.Module):
         for k in keys:
             input_dict[k] = torch.cat([d[k].unsqueeze(0) for d in data], dim=0).to(device)
         if self.audio_cfg.model_type == "MAEST":
-            audio_embeds = self.encode_audio(input_dict["waveform"], device=device)[1]
+            audio_embeds = self.encode_audio(input_dict["waveform"].squeeze().detach().cpu().numpy(), device=device)[1]
         else:
             audio_embeds = self.encode_audio(input_dict, device=device)["embedding"]
         audio_embeds = self.audio_projection(audio_embeds)

@@ -876,7 +876,7 @@ class MAEST(nn.Module):
 
         if self.distilled_type == "mean":
             features = (x[0] + x[1]) / 2
-            features = features.mean(dim=0, keepdim=True)  # [8, 768] to [1, 768]
+            features = features.mean(dim=0, keepdim=True)  # [B, 768] to [1, 768]
             if first_RUN:
                 _logger.debug(f"features size: {features.size()}")
             x = self.head(features)
