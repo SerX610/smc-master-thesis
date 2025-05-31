@@ -242,12 +242,14 @@ def train_one_epoch(
                     )
 
                     # Save train loss / etc. Using non avg meter values as loggers have their own smoothing
+                    steps_per_sec = 1.0 / batch_time_m.avg if batch_time_m.avg > 0 else 0.0
                     log_data = {
                         "loss": loss_m.val,
                         "data_time": data_time_m.val,
                         "batch_time": batch_time_m.val,
                         "scale_audio": logit_scale_scalar_a,
                         "lr": optimizer.param_groups[0]["lr"],
+                        "steps_per_sec": steps_per_sec,
                     }
             for name, val in log_data.items():
                 name = "train/" + name
