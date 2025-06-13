@@ -177,3 +177,7 @@ wandb/
 logs/
 *.err
 *.out
+
+data_loader_test.py
+test*.sh
+train*.sh
