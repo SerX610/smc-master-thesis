@@ -171,6 +171,7 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
+<<<<<<< HEAD
 split-0/
 
 wandb/
@@ -181,3 +182,25 @@ logs/
 data_loader_test.py
 test*.sh
 train*.sh
+=======
+genres_original/
+
+[0-9]/
+[a-f]/
+MTAT_split/
+
+audio/
+song_describer.csv
+
+models/
+
+lightning_logs/
+mtt_laion_embeddings/
+mtt_ms_embeddings/
+sdd_laion_embeddings/
+sdd_ms_embeddings/
+
+laion_clap/
+toy*.png
+htsat*.png
+>>>>>>> origin/main
