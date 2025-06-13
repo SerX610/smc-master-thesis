@@ -168,7 +168,7 @@ def concatenate_and_save_all_embeddings(folder_path, split_name):
 
 if __name__ == "__main__":
     # Define the folder where embeddings will be stored
-    embeddings_folder = "new_mtt_laion_embeddings"
+    embeddings_folder = "mtt_laion_embeddings"
     os.makedirs(embeddings_folder, exist_ok=True)
 
     # Initialize CLAP model from checkpoint with GPU support if available

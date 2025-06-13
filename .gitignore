@@ -187,3 +187,7 @@ mtt_laion_embeddings/
 mtt_ms_embeddings/
 sdd_laion_embeddings/
 sdd_ms_embeddings/
+
+laion_clap/
+toy*.png
+htsat*.png

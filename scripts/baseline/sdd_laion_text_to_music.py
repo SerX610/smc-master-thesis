@@ -79,7 +79,7 @@ def compute_audio_embeddings(clap_model, dataset, batch_size=32):
 
 
 def get_idx_to_audio_paths(dataset):
-    '''
+    """
     Extracts a mapping from dataset indices to corresponding audio paths.
 
     Args:
@@ -88,12 +88,12 @@ def get_idx_to_audio_paths(dataset):
     Returns:
         list[str]: A list where each index corresponds to a text description 
                    and contains the associated audio file path.
-    '''
+    """
     return [dataset[idx][0] for idx in tqdm(range(len(dataset)), desc="Extracting audio paths")]
 
 
 def compute_recall_at_k(similarity_matrix, k, dataset, idx_to_audio_paths):
-    '''
+    """
     Compute recall at k for text-to-audio retrieval.
 
     Args:
@@ -104,7 +104,7 @@ def compute_recall_at_k(similarity_matrix, k, dataset, idx_to_audio_paths):
 
     Returns:
         float: Recall at k (proportion of queries where at least one relevant audio file is in top k results).
-    '''
+    """
     num_queries = similarity_matrix.shape[0]
     ranks = np.argsort(-similarity_matrix, axis=1)  # Sort in descending order (higher similarity first)
     correct_at_k = []
@@ -132,7 +132,7 @@ def compute_recall_at_k(similarity_matrix, k, dataset, idx_to_audio_paths):
 
 
 def compute_median_rank(similarity_matrix, dataset, idx_to_audio_paths):
-    '''
+    """
     Compute the median rank of the first relevant audio sample for each query.
 
     Args:
@@ -142,7 +142,7 @@ def compute_median_rank(similarity_matrix, dataset, idx_to_audio_paths):
 
     Returns:
         float: Median rank of correct audio samples.
-    '''
+    """
     num_queries = similarity_matrix.shape[0]
     ranks = np.argsort(-similarity_matrix, axis=1)  # Sort in descending order (higher similarity first)
     median_ranks = []
@@ -190,8 +190,11 @@ def main():
     # Get index to audio paths mapping
     idx_to_audio_paths = get_idx_to_audio_paths(dataset)
 
+    # Save computed embeddings
     np.save("sdd_laion_embeddings/text_embeddings.npy", text_embeddings)
     np.save("sdd_laion_embeddings/audio_embeddings.npy", audio_embeddings)
+
+    # Uncomment to load precomputed embeddings
     # text_embeddings = np.load("sdd_laion_embeddings/text_embeddings.npy")
     # audio_embeddings = np.load("sdd_laion_embeddings/audio_embeddings.npy")
 
