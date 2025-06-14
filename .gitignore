@@ -171,7 +171,6 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-<<<<<<< HEAD
 split-0/
 
 wandb/
@@ -179,10 +178,7 @@ logs/
 *.err
 *.out
 
-data_loader_test.py
-test*.sh
-train*.sh
-=======
+
 genres_original/
 
 [0-9]/
@@ -192,15 +188,15 @@ MTAT_split/
 audio/
 song_describer.csv
 
-models/
+*.pt
 
 lightning_logs/
-mtt_laion_embeddings/
-mtt_ms_embeddings/
-sdd_laion_embeddings/
-sdd_ms_embeddings/
+models/trained/
+*mtt_laion_embeddings/
+*mtt_ms_embeddings/
+*sdd_laion_embeddings/
+*sdd_ms_embeddings/
 
-laion_clap/
+
 toy*.png
 htsat*.png
->>>>>>> origin/main

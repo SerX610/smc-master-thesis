@@ -190,9 +190,9 @@ def main():
     # Get index to audio paths mapping
     idx_to_audio_paths = get_idx_to_audio_paths(dataset)
 
-    # Save computed embeddings
-    np.save("sdd_laion_embeddings/text_embeddings.npy", text_embeddings)
-    np.save("sdd_laion_embeddings/audio_embeddings.npy", audio_embeddings)
+    # Uncomment to store computed embeddings
+    # np.save("sdd_laion_embeddings/text_embeddings.npy", text_embeddings)
+    # np.save("sdd_laion_embeddings/audio_embeddings.npy", audio_embeddings)
 
     # Uncomment to load precomputed embeddings
     # text_embeddings = np.load("sdd_laion_embeddings/text_embeddings.npy")
