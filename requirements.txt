@@ -71,6 +71,7 @@ pure_eval==0.2.3
 pycparser==2.22
 Pygments==2.19.1
 python-dateutil==2.9.0.post0
+pytorch-lightning==2.5.1.post0
 pytz==2024.2
 PyYAML==6.0.2
 pyzmq==26.2.0
