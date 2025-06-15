@@ -112,11 +112,11 @@ def main():
     """
     # Initialize configuration with specified parameters
     config = CLAPTestConfig(
-        embeddings_folder="mtt_ms_embeddings", 
-        model_ckpt="../../models/trained/mtt-ms-clap-multilabel-classifier-checkpoint.ckpt",
+        embeddings_folder="mtt_laion_embeddings", 
+        model_ckpt="../../models/trained/mtt-laion-clap-multilabel-classifier-checkpoint.ckpt",
         batch_size=64,
         tag_index_mapping_path="../../data/mtt/MTAT_split/top50_tags.txt",
-        plot_dir="../../results/mtt_ms_clap_multilabel_classification_confusion_matrix.png"
+        plot_dir="../../results/mtt_laion_clap_multilabel_classification_confusion_matrix.png"
     )
 
     # Initialize the tester and run the test

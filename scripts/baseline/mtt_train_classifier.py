@@ -110,9 +110,9 @@ def main():
 
     # Initialize configuration with specified parameters
     config = CLAPTrainerConfig(
-        embeddings_folder="mtt_ms_embeddings",
+        embeddings_folder="mtt_laion_embeddings",
         model_dir="../../models/trained/",
-        model_ckpt="mtt-ms-clap-multilabel-classifier-checkpoint",
+        model_ckpt="mtt-laion-clap-multilabel-classifier-checkpoint",
         batch_size=64,
         max_epochs=10,
     )

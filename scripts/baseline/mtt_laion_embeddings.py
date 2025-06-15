@@ -3,10 +3,15 @@ This script extracts audio and text embeddings from the MagnaTagATune (MTT) data
 The extracted embeddings are saved as .npy files for further use in machine learning models.
 """
 
+import sys
+import os
+current_dir = os.path.dirname(os.path.abspath(__file__))  # get the current directory of this script
+scripts_dir = os.path.abspath(os.path.join(current_dir, ".."))  # go one level up to the scripts directory
+sys.path.insert(0, scripts_dir)  # add the scripts directory to the Python path
+import laion_clap  # this should now work as laion_clap is in the scripts directory
+
 import gc
 import glob
-import laion_clap
-import librosa
 import numpy as np
 import os
 import torch

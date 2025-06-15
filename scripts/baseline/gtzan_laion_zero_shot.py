@@ -6,7 +6,13 @@ and audio embeddings, and evaluates the model's performance using accuracy and
 a confusion matrix. The results are saved as a confusion matrix plot.
 """
 
-import laion_clap
+import sys
+import os
+current_dir = os.path.dirname(os.path.abspath(__file__))  # get the current directory of this script
+scripts_dir = os.path.abspath(os.path.join(current_dir, ".."))  # go one level up to the scripts directory
+sys.path.insert(0, scripts_dir)  # add the scripts directory to the Python path
+import laion_clap  # this should now work as laion_clap is in the scripts directory
+
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns

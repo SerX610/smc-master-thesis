@@ -131,27 +131,44 @@ class CLAP_Module(torch.nn.Module):
         ----------
         audio_embed : numpy.darray | torch.Tensor (N,D):
             audio embeddings that extracted from audio files
-        """ 
+        """
         self.model.eval()
-        audio_input = []
+        all_audio_embeds = []
+        segment_samples = 480000  # 10 seconds at 48kHz
         for f in x:
-            # load the waveform of the shape (T,), should resample to 48000
-            audio_waveform, _ = librosa.load(f, sr=48000)           
-            # quantize
+            audio_waveform, _ = librosa.load(f, sr=48000)
             audio_waveform = int16_to_float32(float32_to_int16(audio_waveform))
             audio_waveform = torch.from_numpy(audio_waveform).float()
-            temp_dict = {}
-            temp_dict = get_audio_features(
-                temp_dict, audio_waveform, 480000, 
-                data_truncating='fusion' if self.enable_fusion else 'rand_trunc', 
-                data_filling='repeatpad',
-                audio_cfg=self.model_cfg['audio_cfg'],
-                require_grad=audio_waveform.requires_grad
-            )
-            audio_input.append(temp_dict)
-        audio_embed = self.model.get_audio_embedding(audio_input)
-        if not use_tensor:
-            audio_embed = audio_embed.detach().cpu().numpy()
+            num_segments = max(1, int(len(audio_waveform) // segment_samples))
+            frame_embeds = []
+            for i in range(num_segments):
+                start = i * segment_samples
+                end = start + segment_samples
+                segment = audio_waveform[start:end]
+                if len(segment) < segment_samples:
+                    # pad last segment if needed
+                    pad = torch.zeros(segment_samples - len(segment))
+                    segment = torch.cat([segment, pad])
+                temp_dict = {}
+                temp_dict = get_audio_features(
+                    temp_dict, segment, segment_samples, 
+                    data_truncating='fusion' if self.enable_fusion else 'rand_trunc', 
+                    data_filling='repeatpad',
+                    audio_cfg=self.model_cfg['audio_cfg'],
+                    require_grad=segment.requires_grad
+                )
+                frame_embeds.append(temp_dict)
+            # get embeddings for all frames, then average
+            frame_embeds_tensor = self.model.get_audio_embedding(frame_embeds)
+            if not use_tensor:
+                frame_embeds_tensor = frame_embeds_tensor.detach().cpu().numpy()
+            avg_embed = frame_embeds_tensor.mean(dim=0) if use_tensor else frame_embeds_tensor.mean(axis=0)
+            all_audio_embeds.append(avg_embed)
+        if use_tensor:
+            audio_embed = torch.stack(all_audio_embeds)
+        else:
+            import numpy as np
+            audio_embed = np.stack(all_audio_embeds)
         return audio_embed
 
 
@@ -216,5 +233,5 @@ class CLAP_Module(torch.nn.Module):
         if not use_tensor:
             text_embed = text_embed.detach().cpu().numpy()
         return text_embed
-        
-    
+
+
