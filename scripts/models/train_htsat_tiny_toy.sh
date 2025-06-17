@@ -18,7 +18,7 @@ eval "$(conda shell.bash hook)"
 conda activate env
 
 source ../../../.env
-cd ../laion_clap
+cd ../../laion_clap
 
 python -m training.main \
     --save-frequency 5 \
@@ -41,7 +41,7 @@ python -m training.main \
     --top-k-checkpoint-select-metric="mAP@10" \
     --logs logs \
     --seed 42 \
-    --datasetpath ../../data \
+    --datasetpath ../data \
     --gather-with-grad \
     --optimizer "adam" \
     --data-filling "repeatpad" \
