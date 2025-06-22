@@ -591,7 +591,7 @@ class CLAP(nn.Module):
 
     def encode_audio(self, audio, device):
         if self.audio_cfg.model_type == "MAEST":
-            return self.audio_branch(audio)
+            return self.audio_branch(audio.to(device))
         else:
             return self.audio_branch(audio, mixup_lambda=None, device=device)  # mix lambda needs to add
 
@@ -675,12 +675,12 @@ class CLAP(nn.Module):
             return self.encode_text(text, device=device)
         elif text is None:
             if self.audio_cfg.model_type == "MAEST":
-                audio_features = self.encode_audio(audio["waveform"].squeeze().detach().cpu().numpy(), device=device)[1]
+                audio_features = self.encode_audio(audio["waveform"], device=device)[1]
             else:
                 audio_features = self.encode_audio(audio, device=device)["embedding"]            
             return self.audio_projection(audio_features)
         if self.audio_cfg.model_type == "MAEST":
-            audio_features = self.encode_audio(audio["waveform"].squeeze().detach().cpu().numpy(), device=device)[1]
+            audio_features = self.encode_audio(audio["waveform"], device=device)[1]
         else:
             audio_features = self.encode_audio(audio, device=device)["embedding"]
         audio_features = self.audio_projection(audio_features)
@@ -751,7 +751,7 @@ class CLAP(nn.Module):
         for k in keys:
             input_dict[k] = torch.cat([d[k].unsqueeze(0) for d in data], dim=0).to(device)
         if self.audio_cfg.model_type == "MAEST":
-            audio_embeds = self.encode_audio(input_dict["waveform"].squeeze().detach().cpu().numpy(), device=device)[1]
+            audio_embeds = self.encode_audio(input_dict["waveform"], device=device)[1]
         else:
             audio_embeds = self.encode_audio(input_dict, device=device)["embedding"]
         audio_embeds = self.audio_projection(audio_embeds)
