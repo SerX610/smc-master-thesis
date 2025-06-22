@@ -1,9 +1,5 @@
 """
-Most of this code comes from the timm  library.
-We tried to disentangle from the timm library version.
-
-Adapted from https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py
-
+This script is a modification of the original MAEST implementation (https://github.com/palonso/MAEST/blob/main/models/maest.py)
 """
 
 import collections
@@ -26,7 +22,7 @@ from .helpers.vit_helpers import (
     build_model_with_cfg,
 )
 from .helpers.melspectrogram import MelSpectrogram
-from .discogs_labels import discogs_400labels, discogs_519labels
+# from .discogs_labels import discogs_400labels, discogs_519labels
 
 _logger = logging.getLogger("MAEST")
 
@@ -498,10 +494,10 @@ class MAEST(nn.Module):
         self.distilled_type = distilled_type
         norm_layer = norm_layer or partial(nn.LayerNorm, eps=1e-6)
         act_layer = act_layer or nn.GELU
-        if self.num_classes == 400:
-            self.labels = discogs_400labels
-        elif self.num_classes == 519:
-            self.labels = discogs_519labels
+        # if self.num_classes == 400:
+        #     self.labels = discogs_400labels
+        # elif self.num_classes == 519:
+        #     self.labels = discogs_519labels
 
         self.patch_embed = embed_layer(
             img_size=img_size,
@@ -1143,6 +1139,7 @@ def _create_vision_transformer(variant, pretrained=False, default_cfg=None, **kw
         representation_size=repr_size,
         pretrained_filter_fn=checkpoint_filter_fn,
         pretrained_custom_load="npz" in default_cfg["url"],
+        pretrained_strict=False,
         **kwargs,
     )
     return model
