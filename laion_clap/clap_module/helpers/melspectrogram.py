@@ -13,7 +13,7 @@ from torchaudio.transforms import Spectrogram, MelScale
 class MelSpectrogram(Module):
     """Extract mel-spectgrams as a torchaudio module"""
 
-    sr = 48000
+    sr = 44100
     win_len = 1536
     hop_len = 768
     power = 2
