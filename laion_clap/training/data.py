@@ -716,7 +716,7 @@ def get_wds_dataset(
             collation_fn=partial(collate_fn_with_preprocess,
                                  audio_ext=audio_ext,
                                  text_ext=text_ext,
-                                 max_len=max_len,
+                                 max_len=model_cfg['audio_cfg']['clip_samples'],
                                  audio_cfg=model_cfg['audio_cfg'],
                                  args=args,
                                  ),

@@ -3,7 +3,9 @@
     "audio_cfg": {
         "model_type": "MAEST",
         "model_name": "10s",
-        "class_num": 195
+        "class_num": 195,
+        "clip_samples": 160000,
+        "sample_rate": 16000
     },
     "text_cfg": {
         "context_length": 77,
