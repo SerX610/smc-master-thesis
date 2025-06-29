@@ -134,9 +134,15 @@ class CLAP_Module(torch.nn.Module):
         """
         self.model.eval()
         all_audio_embeds = []
-        segment_samples = 480000  # 10 seconds at 48kHz
+        # Set sample rate and segment length depending on amodel
+        if self.model_cfg['audio_cfg']['model_type'] == 'MAEST':
+            target_sr = 16000
+            segment_samples = 160000  # 10 seconds at 16kHz
+        else:
+            target_sr = 48000
+            segment_samples = 480000  # 10 seconds at 48kHz
         for f in x:
-            audio_waveform, _ = librosa.load(f, sr=48000)
+            audio_waveform, _ = librosa.load(f, sr=target_sr)
             audio_waveform = int16_to_float32(float32_to_int16(audio_waveform))
             audio_waveform = torch.from_numpy(audio_waveform).float()
             num_segments = max(1, int(len(audio_waveform) // segment_samples))
