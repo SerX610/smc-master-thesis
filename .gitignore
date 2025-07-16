@@ -171,7 +171,13 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-split-0/
+legacy_toy_train/
+legacy_toy_validation/
+toy_train/
+toy_validation/
+train/
+validation/
+autotagging-*
 
 wandb/
 logs/
@@ -192,6 +198,7 @@ song_describer.csv
 
 lightning_logs/
 models/trained/
+models/laion-clap/
 *mtt_laion_embeddings/
 *mtt_ms_embeddings/
 *sdd_laion_embeddings/
@@ -200,3 +207,15 @@ models/trained/
 
 toy*.png
 htsat*.png
+maest*.png
+pretrained*.png
+mtg_*.png
+
+test_data_loader.sh
+train_clap_mtg.sh
+*full.sh
+*8.sh
+*16.sh
+*32.sh
+*64.sh
+*96.sh
