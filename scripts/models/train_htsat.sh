@@ -1,15 +1,14 @@
 #!/bin/bash
-#SBATCH -J tiny_toy
-#SBATCH -p high
+#SBATCH -J htsat_64
+#SBATCH -p impa
 #SBATCH --mem=128G
 #SBATCH --gres=gpu:1
 #SBATCH --chdir=/home/scardenas/smc-master-thesis/scripts/models
-#SBATCH --time=6:00:00
-#SBATCH -o %N.%J.out # STDOUT
-#SBATCH -e %N.%j.err # STDERR
+#SBATCH -o job_logs/%N.%J.out # STDOUT
+#SBATCH -e job_logs/%N.%j.err # STDERR
 
 #Load Miniconda module 
-module load Miniconda3/4.9.2
+module load Anaconda3/2024.02-1
 
 #Enable the bash shell
 eval "$(conda shell.bash hook)"
@@ -32,11 +31,11 @@ python -m training.main \
     --epochs=45 \
     --workers=1 \
     --use-bn-sync \
-    --amodel HTSAT-tiny \
+    --amodel HTSAT-base \
     --tmodel roberta \
     --warmup 3200 \
     --report-to "wandb" \
-    --wandb-notes "htsat-tiny-toy-data" \
+    --wandb-notes "HTSAT-64" \
     --datasetnames "mtg_jamendo/split-0" \
     --top-k-checkpoint-select-metric="mAP@10" \
     --logs logs \
@@ -46,4 +45,5 @@ python -m training.main \
     --optimizer "adam" \
     --data-filling "repeatpad" \
     --data-truncating "rand_trunc" \
-    --freeze-text
+    --freeze-text \
+    --pretrained-audio ../models/laion-clap/HTSAT-pretrained.ckpt
