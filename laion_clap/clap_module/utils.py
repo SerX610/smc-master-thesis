@@ -371,18 +371,55 @@ def load_class_label(path):
 from torch import optim
 
 
-def get_optimizer(params, lr, betas, eps, momentum, optimizer_name):
+def get_optimizer(params, lr, betas, eps, momentum, optimizer_name,
+                  layerwise_maest=False, model=None, weight_decay=0.0, lr_decay=1.0):
+    if layerwise_maest:
+        if model is None:
+            raise ValueError("Model must be provided for layerwise learning rate scaling.")
+
+        param_groups = []
+
+        # 1. Get audio_branch module only
+        audio_branch = getattr(model, 'audio_branch', None)
+
+        # 2. Build layerwise LR groups for audio branch
+        for i, (name, module) in enumerate(audio_branch.named_children()):
+            group_lr = lr * (lr_decay ** i)
+            group = {
+                "params": list(module.parameters()),
+                "lr": group_lr,
+                "weight_decay": weight_decay,
+            }
+            param_groups.append(group)
+            print(f"Audio Layer {i}: {name}, LR: {group_lr:.2e}")
+
+        # 3. Get all other parameters excluding audio_branch parameters
+        audio_params = set(p for p in audio_branch.parameters())
+        other_params = [p for p in model.parameters() if p not in audio_params]
+
+        # 4. Add the other parameters as a single group with base LR
+        if other_params:
+            param_groups.append({
+                "params": other_params,
+                "lr": lr,
+                "weight_decay": weight_decay,
+            })
+            print(f"Other params LR: {lr:.2e}")
+
+    else:
+        param_groups = params
+
     if optimizer_name.lower() == "adamw":
         optimizer = optim.AdamW(
-            params, lr=lr, betas=betas, eps=eps
+            param_groups, lr=lr, betas=betas, eps=eps
         )
     elif optimizer_name.lower() == "sgd":
         optimizer = optim.SGD(
-            params, lr=lr, momentum=momentum
+            param_groups, lr=lr, momentum=momentum
         )
     elif optimizer_name.lower() == "adam":
         optimizer = optim.Adam(
-            params, lr=lr, betas=betas, eps=eps
+            param_groups, lr=lr, betas=betas, eps=eps
         )
     else:
         raise ValueError("optimizer name is not correct")

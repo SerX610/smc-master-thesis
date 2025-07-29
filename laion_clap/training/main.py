@@ -413,6 +413,10 @@ def main():
                 eps=args.eps,
                 momentum=args.momentum,
                 optimizer_name=args.optimizer,
+                layerwise_maest=args.layerwise_maest,
+                model=model,
+                weight_decay=args.wd,
+                lr_decay=args.lr_decay
             )
 
             scheduler = cosine_lr(optimizer, args.lr, args.warmup, total_steps)

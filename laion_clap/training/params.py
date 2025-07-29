@@ -555,6 +555,18 @@ def parse_args():
         default=None,
         help="The prefetch factor for dataloader. Larger value will use more memory and CPU but faster.",
     )
+    parser.add_argument(
+        "--layerwise-maest",
+        default=False,
+        action="store_true",
+        help="Enable layerwise learning rates for MAEST audio encoder."
+    )
+    parser.add_argument(
+        "--lr-decay",
+        type=float,
+        default=1.0,
+        help="Layer-wise learning rate decay factor."
+    )
 
     args = parser.parse_args()
 
