@@ -57,6 +57,12 @@ smc-master-thesis/
     chmod +x scripts/models/train_maest.sh
     ./scripts/models/train_maest.sh
     ```
+  - Alternatively, you can download a pretrained checkpoint.
+  - Example:
+    ```bash
+    chmod +x scripts/models/download_laion_clap_ckpt.sh
+    ./scripts/models/download_laion_clap_ckpt.sh
+    ```
 
 - **Evaluation:**
   - Run evaluation scripts in `src/evaluation/` for zero-shot classification, multi-label classification, and text-to-music retrieval.
