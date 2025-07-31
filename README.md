@@ -38,15 +38,7 @@ smc-master-thesis/
    conda activate env
    pip install -r requirements.txt
    ```
-
-3. **Prepare datasets:**
-   - Place datasets in the `data/` directory as described in the scripts and documentation.
-   - Use the provided scripts in `scripts/data/` to convert datasets to webdataset format if needed.
-
-4. **Train or download pretrained models:**
-   - Use the training scripts to train models, or download pretrained checkpoints if available.
-   - Place checkpoints in the `models/` directory.
-   - Update paths in scripts as necessary.
+   
 
 ## Usage
 
