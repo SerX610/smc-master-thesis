@@ -50,6 +50,15 @@ smc-master-thesis/
 
 ## Usage
 
+
+- **Datasets:**
+  - Use scripts in `scripts/data/` to download the datasets.
+  - Example:
+    ```bash
+    chmod +x scripts/data/download_gtzan.sh
+    ./scripts/data/download_gtzan.sh
+    ```
+
 - **Training:**
   - Use scripts in `scripts/models/` to train models with different encoders and configurations.
   - Example:
