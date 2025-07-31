@@ -70,7 +70,7 @@ smc-master-thesis/
   - Example:
     ```bash
     chmod +x scripts/evaluation/evaluate_model.sh
-    bash scripts/evaluation/evaluate_model.sh
+    ./scripts/evaluation/evaluate_model.sh
     ```
 
 
