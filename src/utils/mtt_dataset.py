@@ -21,11 +21,11 @@ class MagnaTagATuneDataset(Dataset):
     the specified split (train, validation, or test).
     """
     
-    def __init__(self, split, root="../../data/mtt"):
+    def __init__(self, split, root="data/mtt"):
         """
         Args:
             split (str): One of 'train', 'valid', or 'test'.
-            root (str, optional): Root directory for dataset files. Default is "../../data/mtt".
+            root (str, optional): Root directory for dataset files. Default is "data/mtt".
         """
 
         self.root = root
