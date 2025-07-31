@@ -38,7 +38,7 @@ smc-master-thesis/
    conda activate env
    pip install -r requirements.txt
    ```
-   
+
 
 ## Usage
 
@@ -66,7 +66,7 @@ smc-master-thesis/
     ```
 
 - **Evaluation:**
-  - Run evaluation scripts in `src/evaluation/` for zero-shot classification, multi-label classification, and text-to-music retrieval.
+  - Run evaluation scripts in `scripts/evaluation/` for zero-shot classification, multi-label classification, and text-to-music retrieval.
   - Example:
     ```bash
     chmod +x scripts/evaluation/evaluate_model.sh
