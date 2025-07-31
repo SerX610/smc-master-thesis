@@ -2,7 +2,7 @@
 
 # Define variables
 BASE_URL="https://mirg.city.ac.uk/datasets/magnatagatune/mp3.zip."
-DEST_DIR="../../data/mtt/"
+DEST_DIR="data/mtt/"
 MERGED_ZIP="$DEST_DIR/mp3.zip"
 TAGS_URL="https://mirg.city.ac.uk/datasets/magnatagatune/annotations_final.csv"
 SPLIT_URL="https://github.com/jongpillee/music_dataset_split/archive/refs/heads/master.zip"

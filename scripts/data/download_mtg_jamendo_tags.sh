@@ -4,7 +4,7 @@
 TAGS_URL="https://raw.githubusercontent.com/MTG/mtg-jamendo-dataset/refs/heads/master/data/splits/split-0"
 TRAIN_TAGS_FILE="autotagging-train.tsv"
 VALID_TAGS_FILE="autotagging-validation.tsv"
-DEST_DIR="../../data/mtg_jamendo/split-0"
+DEST_DIR="data/mtg_jamendo/split-0"
 
 # Create the destination directory if it doesn't exist
 mkdir -p "$DEST_DIR"

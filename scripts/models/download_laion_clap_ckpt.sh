@@ -5,7 +5,7 @@ MODEL_CKPT="music_audioset_epoch_15_esc_90.14.pt"
 URL="https://huggingface.co/lukewys/laion_clap/resolve/main/$MODEL_CKPT"
 
 # Define the destination directory and create it if it doesn't exist
-DEST_DIR="../../models/laion-clap"
+DEST_DIR="models/laion-clap"
 mkdir -p "$DEST_DIR"
 
 # Download the file using wget

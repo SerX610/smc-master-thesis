@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define variables
-DEST_DIR="../../data/sdd/"
+DEST_DIR="data/sdd/"
 RECORD_ID="10072001"
 SONG_DESCRIBER="https://zenodo.org/record/$RECORD_ID/files/song_describer.csv"
 AUDIO_DATA="https://zenodo.org/record/$RECORD_ID/files/audio.zip"

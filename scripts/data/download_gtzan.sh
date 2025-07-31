@@ -2,7 +2,7 @@
 
 # Define variables
 DATASET_URL="https://www.kaggle.com/api/v1/datasets/download/andradaolteanu/gtzan-dataset-music-genre-classification"
-DEST_DIR="../../data/gtzan"
+DEST_DIR="data/gtzan"
 ZIP_FILE="$DEST_DIR/gtzan-dataset-music-genre-classification.zip"
 EXTRACT_DIR="$DEST_DIR/Data"
 
