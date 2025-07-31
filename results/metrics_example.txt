@@ -1,0 +1,8 @@
+GTZAN Zero-Shot Classification - Accuracy: 72.37%
+MTT Multi-Label Classification - AUROC: 0.887
+MTT Multi-Label Classification - MAP: 0.409
+SDD Text-to-Music Retrieval - R@1: 6.70
+SDD Text-to-Music Retrieval - R@5: 25.60
+SDD Text-to-Music Retrieval - R@10: 39.01
+SDD Text-to-Music Retrieval - MedR: 20
+
