@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Activate your Python virtual environment
-conda activate env
+# Activate your Python virtual environment if needed
+# conda activate env
 
 # Run the Python script
-python create_mtg_jamendo_webdataset.py
+python ../../src/utils/create_mtg_jamendo_webdataset.py

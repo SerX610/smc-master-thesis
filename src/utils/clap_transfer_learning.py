@@ -1,22 +1,32 @@
 """
-This script defines the `CLAPTransferLearning` class, a PyTorch Lightning
-module designed for multi-label classification using precomputed audio
-embeddings and a Multi-Layer Perceptron (MLP). The model is intended for
-transfer learning tasks, where audio samples are classified into multiple
-categories based on their embeddings.
+CLAPTransferLearning: PyTorch Lightning module for multi-label classification using precomputed audio embeddings.
+
+This script provides a transfer learning framework for audio classification tasks. It uses a Multi-Layer Perceptron (MLP)
+to classify audio samples into multiple categories based on their embeddings. The module supports training, validation,
+and testing with metrics such as AUROC, Average Precision, and Confusion Matrix.
 """
 
-import matplotlib.pyplot as plt
+import os
+from dataclasses import dataclass
+
 import numpy as np
+import matplotlib.pyplot as plt
+
 import torch
 import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader
 
-from pytorch_lightning import LightningModule
+from pytorch_lightning import LightningModule, Trainer, seed_everything
+from pytorch_lightning.callbacks import ModelCheckpoint
+
 from torchmetrics.classification import (
     MultilabelAveragePrecision,
     MultilabelAUROC,
     MultilabelConfusionMatrix,
 )
+
+seed = 42
+seed_everything(seed, workers=True)
 
 
 class CLAPTransferLearning(LightningModule):
@@ -50,7 +60,7 @@ class CLAPTransferLearning(LightningModule):
             lr=0.0001,
             threshold=0.5,
             tag_index_mapping=None,
-            plot_dir="../../results/mtt_clap_multilabel_classification_confusion_matrix.png",
+            plot_dir="results/mtt_clap_multilabel_classification_confusion_matrix.png",
             ):
         super().__init__()
 
@@ -224,3 +234,164 @@ class CLAPTransferLearning(LightningModule):
             ax.set_xlabel("Predicted Label")
             ax.set_ylabel("True Label")
         return fig
+
+
+class AudioEmbeddingDataset(Dataset):
+    """
+    A custom PyTorch Dataset for loading audio embeddings and corresponding labels.
+
+    Args:
+        audio_embeddings_file (str): Path to the .npy file containing audio embeddings.
+        labels_file (str): Path to the .npy file containing labels corresponding to the audio embeddings.
+    """
+    def __init__(self, audio_embeddings_file, labels_file):
+        self.audio_embeddings = torch.from_numpy(np.load(audio_embeddings_file)).float()
+        self.labels = torch.from_numpy(np.load(labels_file)).float()
+
+    def __len__(self):
+        """Returns the number of samples in the dataset."""
+        return len(self.labels)
+
+    def __getitem__(self, idx):
+        """
+        Args:
+            idx (int): Index of the sample to retrieve.
+
+        Returns:
+            tuple: A tuple containing the index and the corresponding label.
+        """
+        return idx, self.labels[idx]
+
+
+@dataclass
+class CLAPTrainerConfig:
+    """
+    Configuration class for CLAPTrainer that holds various hyperparameters and file paths.
+    """
+
+    embeddings_folder: str = "mtt_embeddings"  # Path to the folder containing the embeddings
+    model_dir: str = "models/trained/"  # Directory to save the model checkpoint
+    model_ckpt: str = "mtt-clap-multilabel-classifier-checkpoint"  # Filename for saving the model checkpoint
+    batch_size: int = 64  # Batch size for training
+    max_epochs: int = 10  # Maximum number of training epochs
+
+
+class CLAPTrainer:
+    """
+    Trainer class to handle data preparation, model initialization, and training.
+
+    Args:
+        config (CLAPTrainerConfig): A configuration object that contains training parameters.
+    """
+    def __init__(self, config: CLAPTrainerConfig):
+        self.config = config
+
+        # Ensure the model directory exists
+        os.makedirs(self.config.model_dir, exist_ok=True)
+
+        # Define dataset paths for training and validation
+        self.train_audio_embeddings_file = f"{self.config.embeddings_folder}/train_audio_embeddings.npy"
+        self.train_labels_file = f"{self.config.embeddings_folder}/train_labels.npy"
+        self.valid_audio_embeddings_file = f"{self.config.embeddings_folder}/valid_audio_embeddings.npy"
+        self.valid_labels_file = f"{self.config.embeddings_folder}/valid_labels.npy"
+
+        # Initialize the DataLoader for both training and validation datasets
+        self.train_dataloader = DataLoader(
+            AudioEmbeddingDataset(self.train_audio_embeddings_file, self.train_labels_file),
+            batch_size=self.config.batch_size, shuffle=True, num_workers=4
+        )
+        self.valid_dataloader = DataLoader(
+            AudioEmbeddingDataset(self.valid_audio_embeddings_file, self.valid_labels_file),
+            batch_size=self.config.batch_size, shuffle=False, num_workers=4
+        )
+
+        # Initialize the CLAP model for transfer learning
+        self.model = CLAPTransferLearning(self.train_audio_embeddings_file)
+
+    def train_model(self):
+        """
+        Trains the CLAP model using PyTorch Lightning with checkpointing.
+        """
+
+        checkpoint_callback = ModelCheckpoint(
+            monitor="val_loss",
+            dirpath=self.config.model_dir,
+            filename=self.config.model_ckpt,
+        )
+
+        # Initialize the PyTorch Lightning trainer with GPU acceleration if available
+        trainer = Trainer(
+            max_epochs=self.config.max_epochs,
+            accelerator="gpu" if torch.cuda.is_available() else "cpu",
+            callbacks=[checkpoint_callback],
+        )
+
+        # Train the model
+        trainer.fit(self.model, self.train_dataloader, self.valid_dataloader)
+
+
+@dataclass
+class CLAPTestConfig:
+    """
+    Configuration class for CLAPTester that holds various file paths and parameters for testing.
+    """
+    
+    embeddings_folder: str = "mtt_embeddings"  # Path to the folder containing the embeddings
+    model_ckpt: str = "models/trained/mtt-clap-multilabel-classifier-checkpoint.ckpt"  # Path to the model checkpoint
+    batch_size: int = 64  # Batch size for testing
+    tag_index_mapping_path: str = "data/mtt/MTAT_split/top50_tags.txt"  # Path to the tag list `.txt` file
+    plot_dir: str = "results/mtt_clap_multilabel_classification_confusion_matrix.png"  # Directory to save the plot
+
+
+class CLAPTester:
+    """
+    Tester class to handle data preparation, model loading, and testing.
+
+    Args:
+        config (CLAPTestConfig): A configuration object that contains testing parameters.
+    """
+    def __init__(self, config: CLAPTestConfig):
+        self.config = config
+        self.test_results = None  # Will hold test metrics after test_model()
+
+        # Define dataset paths for testing
+        self.test_audio_embeddings_file = f"{self.config.embeddings_folder}/test_audio_embeddings.npy"
+        self.test_labels_file = f"{self.config.embeddings_folder}/test_labels.npy"
+
+        # Initialize the DataLoader for testing dataset
+        self.test_dataloader = DataLoader(
+            AudioEmbeddingDataset(self.test_audio_embeddings_file, self.test_labels_file),
+            batch_size=self.config.batch_size, shuffle=False, num_workers=4
+        )
+
+        # Load the tag-to-index mapping from the .txt file
+        self.tag_index_mapping = self._load_tag_index_mapping_from_txt()
+
+        # Load the model from the checkpoint
+        self.model = CLAPTransferLearning.load_from_checkpoint(
+            self.config.model_ckpt,
+            audio_embeddings_file=self.test_audio_embeddings_file,
+            tag_index_mapping=self.tag_index_mapping,
+            plot_dir=self.config.plot_dir,
+        )
+
+    def test_model(self):
+        """
+        Tests the CLAP model using PyTorch Lightning and saves the test results.
+        """
+        trainer = Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu")
+        results = trainer.test(self.model, self.test_dataloader)
+        if results:
+            self.test_results = results[0]  # Save the first dict of test metrics
+
+    def _load_tag_index_mapping_from_txt(self):
+        """
+        Loads the tag-to-index mapping from a .txt file.
+        
+        Returns:
+            dict: A dictionary mapping indices to tags.
+        """
+        with open(self.config.tag_index_mapping_path, 'r') as f:
+            tags = [line.strip() for line in f.readlines()]
+        
+        return {index: tag for index, tag in enumerate(tags)}

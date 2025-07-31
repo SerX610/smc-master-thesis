@@ -184,7 +184,6 @@ logs/
 *.err
 *.out
 
-
 genres_original/
 
 [0-9]/
@@ -204,7 +203,6 @@ models/laion-clap/
 *sdd_laion_embeddings/
 *sdd_ms_embeddings/
 
-
 toy*.png
 htsat*.png
 maest*.png
@@ -219,3 +217,6 @@ train_clap_mtg.sh
 *32.sh
 *64.sh
 *96.sh
+*decay*
+*layer*
+*metrics*

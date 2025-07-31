@@ -3,8 +3,8 @@ import csv
 import json
 import webdataset as wds
 
-
 from collections import defaultdict
+
 
 def clean_tag(tag):
     """

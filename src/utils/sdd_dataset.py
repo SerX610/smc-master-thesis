@@ -16,12 +16,12 @@ class SongDescriberDataset(Dataset):
     This class loads MP3 file paths and their corresponding captions in a PyTorch-friendly format.
     """
     
-    def __init__(self, root="../../data/sdd", csv_file_name="song_describer.csv"):
+    def __init__(self, root="data/sdd", csv_file_name="song_describer.csv"):
         """
         Initializes the dataset by loading file paths and captions from a CSV file.
 
         Args:
-            root (str, optional): Root directory for dataset files. Default is "../../data/sdd".
+            root (str, optional): Root directory for dataset files. Default is "data/sdd".
             csv_file_name (str, optional): CSV file name with the dataset metadata. Default is "song_describer.csv".
         """
         self.root = root
