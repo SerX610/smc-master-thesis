@@ -2,7 +2,7 @@
 
 This repository contains the code and resources for the Master's Thesis in Sound and Music Computing by Sergio Cárdenas Gracia, focusing on the **Comparison of Audio Encoders for Audio-Text Contrastive Learning Representations**.
 
-The goal of this thesis is to systematically compare state-of-the-art audio encoders (e.g., MAEST, HTSAT) for audio-text contrastive learning scenarios (CLAP). The project explores how different architectures and training strategies affect the quality of learned representations for downstream tasks such as zero-shot classification, multi-label classification, and text-to-music retrieval. For more information, check the project report (TODO: add link to PDF)
+The goal of this thesis is to systematically compare state-of-the-art audio encoders (e.g., MAEST, HTSAT) for audio-text contrastive learning scenarios (CLAP). The project explores how different architectures and training strategies affect the quality of learned representations for downstream tasks such as zero-shot classification, multi-label classification, and text-to-music retrieval. For more information, check the project report at the following [link](https://zenodo.org/records/17304842).
 
 ## Repository Structure
 
